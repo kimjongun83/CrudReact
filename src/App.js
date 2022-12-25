@@ -1,19 +1,32 @@
-import logo from './logo.svg';
-import ButtonComponent from "./components/Button";
-import GuestLayout from "./layouts/Guest";
-import AuthLayout from "./layouts/Auth";
-import AdminLayout from "./layouts/Admin";
-import Register from "./pages/Register"
-import './App.css';
+import './App.scss';
+import AuthLayout from 'layouts/Auth';
+import Register from 'pages/Register/register.js';
+import Login from 'pages/Login/login.js';
+import { ToastContainer } from 'react-toastify';
+import "react-toastify/dist/ReactToastify.css";
+import { Routes, Route, useNavigate } from "react-router-dom";
+import Dashboard from 'pages/Dashboard';
+import { useEffect } from 'react';
+
 
 function App() {
-  return (<div className="App">
-  
-  <AuthLayout>
-      <Register/>
-  </AuthLayout>
- 
-</div>);
+    const navigate = useNavigate();
+    useEffect(() => {
+        if (!localStorage.getItem("token")) {
+            navigate("/login");
+        }
+    }, []);
+
+    return (<div className="App">
+        <AuthLayout>
+            <Routes>
+                <Route path="/register" element={<Register />}></Route>
+                <Route path="/login" element={<Login />}></Route>
+                <Route path="/dashboard" element={<Dashboard />}></Route>
+            </Routes>
+        </AuthLayout>
+        <ToastContainer />
+    </div>);
 }
 
 export default App;

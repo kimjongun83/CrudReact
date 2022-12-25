@@ -1,0 +1,31 @@
+.loading{
+    position: fixed;
+    background: #00000061;
+    width: 100%;
+    height: 100%;
+    left: 0;
+    top: 0;
+    display: flex;
+    z-index: 9999;
+    align-items: center;
+    justify-content: center;
+}
+.loading.hide{
+    display: none;
+}
+.wrapper{
+    position: relative;
+    .showPassword{
+        position: absolute;
+        right: 1%;
+        bottom: 18%;
+        cursor: pointer;
+    }
+    .showPasswordConfirm{
+        position: absolute;
+        right: 1%;
+        bottom: 18%;
+        cursor: pointer;
+    }
+   
+}

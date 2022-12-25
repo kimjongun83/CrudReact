@@ -1,52 +1,55 @@
 import React from "react";
 import { useEffect } from "react";
 import { useState } from "react";
-import ApiHelper from "../../services/service";
+import ApiHelper from "services/service";
 import ClipLoader from "react-spinners/ClipLoader";
 import "./index.css";
-import { isValidEmail } from "../../utils/function";
+
 import Form from "react-bootstrap/Form";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import ButtonComponent from "../../components/Button";
-
+import ButtonComponent from "components/Button";
+import { useFormik } from 'formik';
+import * as Yup from "yup";
 const override = {
   display: "block",
   margin: "0 auto",
   borderColor: "red",
 };
 const Register = () => {
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [confirm_password, setConfirmPassword] = useState("");
   const [loaded, setLoaded] = useState(false);
-  const [errorName, setErrorName] = useState("");
-  const [errorEmail, setErrorEmail] = useState("");
-  const [errorPassowrd, setErrorPassword] = useState("");
-  const [errorConfirm, setErrorConfirm] = useState("");
-
-  useEffect(() => {
-    if (loaded) {
-      setTimeout(() => {
-        setLoaded(false);
-      }, 1000);
+  const formik = useFormik({
+      initialValues: {
+          name: "",
+          email: "",
+          password: "",
+          confirm_password: "",
+      },
+      validationSchema: Yup.object({
+        name: Yup.string()
+            .required("Please Enter a username")
+            .min(4, "Must be 4 characters or more"),
+        email: Yup.string()
+            .required("Please Enter your Email")
+            .matches(/^(([^<>()[\]\.,;:\s@\"]+(\.[^<>()[\]\.,;:\s@\"]+)*)|(\".+\"))@(([^<>()[\]\.,;:\s@\"]+\.)+[^<>()[\]\.,;:\s@\"]{2,})$/i, "Please enter a valid email"),
+        password: Yup.string()
+            .required('Please Enter your password')
+            .matches(
+                /^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[!@#\$%\^&\*])(?=.{8,})/,
+                "Must Contain 8 Characters, One Uppercase, One Lowercase, One Number and One Special Case Character"
+            ),
+        confirm_password: Yup.string()
+            .required("Required")
+            .oneOf([Yup.ref("password"), null], "Password must match "),
+    }),
+    onSubmit: (values, { resetForm }) => {
+        console.log(values);
+        register(values);
+        resetForm({ values: '' });
     }
-  }, [loaded]);
-  const handleChangeName = (e) => {
-    setName(e.target.value);
-  };
-  const handleChangeEmail = (e) => {
-    setEmail(e.target.value);
-  };
 
-  const handleChangePassword = (e) => {
-    setPassword(e.target.value);
-  };
+});
 
-  const handleChangeNameConfirmPassword = (e) => {
-    setConfirmPassword(e.target.value);
-  };
   const showToastMessageError = (error) => {
     toast.error(error, {
       position: toast.POSITION.TOP_RIGHT,
@@ -57,97 +60,29 @@ const Register = () => {
       position: toast.POSITION.TOP_RIGHT,
     });
   };
-  const validateName = (name, min) => {
-    let checkName = false;
-    if (!name) {
-      setErrorName("Name is not blank");
-    } else {
-      setErrorName("");
-    }
-    return !checkName;
-  };
+  const register = async (object)=>{
+    
+    try {
+      setLoaded(true)
+      ApiHelper.setJwtToken(null);
+      const resposne = await ApiHelper.post({
+        path: "auth/register",
+        payload: JSON.stringify(object),
+      });
 
-  const validateEmail = (email) => {
-    let checkEmail = false;
-    if (!email) {
-      setErrorEmail("Email is not blank");
-    } else if (!isValidEmail(email)) {
-      setErrorEmail("Please check email type");
-    } else {
-      setErrorEmail("");
-    }
-    return !checkEmail;
-  };
-  const validatePassword = (password, min, max) => {
-    let checkPassword = false;
-
-    if (!password) {
-      setErrorPassword("Password is not blank");
-    } else if (password.length < min) {
-      setErrorPassword(`Password must be at least ${min} character.`);
-    } else if (password.length > max) {
-      setErrorPassword(`Password must be less than ${max} character.`);
-    } else if (!/[A-Z]/.test(password)) {
-      setErrorPassword(
-        "password should contain at least 1 uppercase character"
-      );
-    } else if (!/[0-9]/.test(password)) {
-      setErrorPassword("password should contain at least 1 number character");
-    } else if (!/[$@%^&*()}{[\]}!]/.test(password)) {
-      setErrorPassword("password should contain at least 1 special character");
-    } else {
-      setErrorPassword("");
-    }
-    return !checkPassword;
-  };
-  const passwordMatch = (password, confirm_password) => {
-    let checkMatch = false;
-    if (!confirm_password) {
-      setErrorConfirm("ConfirmPassword is not blank");
-    } else if (password !== confirm_password) {
-      setErrorConfirm("Password does not match");
-    } else {
-      setErrorConfirm("");
-    }
-    return !checkMatch;
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    validateName(name, 4);
-    validateEmail(email);
-    validatePassword(password, 8, 16);
-    passwordMatch(password, confirm_password);
-    let validateForms =  validateName(name, 4) && validateEmail(email) && validatePassword && passwordMatch
-    if(validateForms ){
-      try {
-        ApiHelper.setJwtToken(null);
-        const resposne = await ApiHelper.post({
-          path: "auth/register",
-          payload: JSON.stringify({
-            name: name,
-            email: email,
-            password: password,
-            confirm_password: confirm_password,
-          }),
-        });
-  
-        if (resposne.success === true) {
-          setLoaded(true);
-          showToastMessageSuccess(resposne.message);
-        }
-      } catch (error) {
-        setLoaded(true);
-        showToastMessageError(error.message);
+      if (resposne.success === true) {
+        setLoaded(false);
+        showToastMessageSuccess(resposne.message);
       }
+    } catch (error) {
+      showToastMessageError(error.message);
+      setLoaded(false);
     }
-  
-   
-  };
+   }
 
   return (
     <div className="container">
-      <div className={`loading ${loaded !== true ? "hide" : ""}`}>
+     <div className={`loading ${loaded !== true ? "hide" : ""}`}>
         <ClipLoader color={"white"} loading={loaded} cssOverride={override} />
       </div>
       <div className="row py-5 mt-4 align-items-center">
@@ -171,7 +106,7 @@ const Register = () => {
         </div>
 
         <div className="col-md-7 col-lg-6 ml-auto">
-          <Form autoComplete="off" onSubmit={handleSubmit}>
+          <Form autoComplete="off"onSubmit={formik.handleSubmit}>
             <Form.Group className="mb-3 ">
               <Form.Label>Name</Form.Label>
               <Form.Control
@@ -179,10 +114,10 @@ const Register = () => {
                 name="name"
                 type="text"
                 placeholder="Enter name"
-                value={name}
-                onChange={handleChangeName}
+                value={formik.values.name}
+                onChange={formik.handleChange}
               />
-              <p className="text-danger">{errorName}</p>
+              <p className="text-danger">{formik.errors.name}</p>
             </Form.Group>
             <Form.Group className="mb-3 ">
               <Form.Label>Email address</Form.Label>
@@ -191,10 +126,10 @@ const Register = () => {
                 name="email"
                 type="email"
                 placeholder="Enter email"
-                value={email}
-                onChange={handleChangeEmail}
+                value={formik.values.email}
+                onChange={formik.handleChange}
               />
-              <p className="text-danger">{errorEmail}</p>
+               {formik.errors.email && <span className="text-danger">{formik.errors.email}</span>}
             </Form.Group>
 
             <Form.Group className="mb-3 ">
@@ -204,10 +139,10 @@ const Register = () => {
                 name="password"
                 type="password"
                 placeholder="Password"
-                value={password}
-                onChange={handleChangePassword}
+                value={formik.values.password}
+                onChange={formik.handleChange}
               />
-              <p className="text-danger">{errorPassowrd}</p>
+              {formik.errors.password && <span className="text-danger">{formik.errors.password}</span>}
             </Form.Group>
 
             <Form.Group className="mb-3 ">
@@ -217,17 +152,17 @@ const Register = () => {
                 name="confirm_password"
                 type="password"
                 placeholder="Password"
-                value={confirm_password}
-                onChange={handleChangeNameConfirmPassword}
+                value={formik.values.confirm_password}
+                onChange={formik.handleChange}
               />
-              <p className="text-danger">{errorConfirm}</p>
+                {formik.errors.confirm_password && <span className="text-danger">{formik.errors.confirm_password}</span>}
             </Form.Group>
             <ButtonComponent
               className="btn-primary w-100"
               name={"Register"}
-              type={"submit"}
-              onClick={showToastMessageError || showToastMessageSuccess}
-            ></ButtonComponent>
+              type={"submit"}>
+            
+            </ButtonComponent>
             <ToastContainer autoClose={1000} hideProgressBar={true} />
           </Form>
         </div>

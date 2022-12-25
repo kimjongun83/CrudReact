@@ -1,0 +1,23 @@
+
+.Button-component {
+    outline: none;
+    border: none;
+    background-color: #ccc;
+    color: white;
+    padding: 10px 15px;
+    &.btn-primary {
+        background-color: #2691d9;
+        border-radius: 25px;
+        outline: none;
+        border: none;
+        font-size: 18px;
+        font-weight: bold;
+        cursor: pointer;
+        transition: 0.3s;
+        &:hover {
+            background-color: #08609a;
+        }
+    }
+}
+
+

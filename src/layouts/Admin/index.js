@@ -1,4 +1,4 @@
-const AdminLayout = ({children}) => {
+const AdminLayout = ({ children }) => {
     return (
         <div className="Admin-layout">
             <div>Sidebar</div>
